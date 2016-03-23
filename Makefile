@@ -1,11 +1,11 @@
 .PHONY: clean
 CHROMOSOME = NC_000001.11
 
-chromosome-1-positive: NC_000001.11 select-strand.py
-	./select-strand.py 0 < $< > $@ 2>/dev/null
+chromosome-1-positive: NC_000001.11 select-strand.py make-features.py
+	./select-strand.py 0 < $< 2>/dev/null | ./make-features.py > $@
 
-chromosome-1-negative: NC_000001.11 select-strand.py
-	./select-strand.py 1 < $< > $@ 2>/dev/null
+chromosome-1-negative: NC_000001.11 select-strand.py make-features.py
+	./select-strand.py 1 < $< 2>/dev/null | ./make-features.py > $@
 
 
 triplet-histogram.png: histogram-data.txt plot-triplet-histogram.gpl

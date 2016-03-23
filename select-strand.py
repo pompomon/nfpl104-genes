@@ -1,5 +1,9 @@
 #!/usr/bin/python
 
+# FIXME reversing the negative strand is done by storing it in memory and
+#  printing in reverse direction. This takes A LOT of memory.
+#  We should probably reverse it in smaller chunks.
+
 # This prints chromosome strand "left" or "right", depending on the argument.
 # Usage: select-strand.py {0 | 1} < chromosome > single-strand
 
@@ -72,7 +76,7 @@ for triplet in triplets(sys.stdin):
 	if selected_strand == 0:
 		sys.stdout.write(triplet[0] + "\t" + triplet[1] + "\n")
 	else:
-		# Negative strand → mirror the nucleotide and reverse the whole
+		# Negative strand → mirror the nucleotide and store before reversing and printing
 		genome_to_reverse.append(mirror_nucleotide(triplet[0]) + "\t" + triplet[2] + "\n");
 
 
