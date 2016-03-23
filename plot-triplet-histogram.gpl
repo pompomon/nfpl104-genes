@@ -1,0 +1,16 @@
+set terminal png enhanced giant font "arial,18" size 3200, 1200
+# set output "triplet-histogram.png"
+
+set xtics nomirror rotate by -45
+
+set style data histogram
+set style histogram cluster gap 1
+set style fill solid border -1
+
+
+set title 'How often is a codon located in a particular position relative to a gene?'
+
+plot 'histogram-data.txt' using 2:xticlabels(1) title 'before start', \
+     '' using 3 title 'after start', \
+     '' using 4 title 'before end', \
+     '' using 5 title 'after end'
