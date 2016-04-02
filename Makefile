@@ -1,21 +1,36 @@
+SHELL := /bin/bash
+
 .PHONY: all clean
 CHROMOSOME = NC_000001.11
 # gene-short
 #NC_000001.11
 
-# all: chromosome-1-positive chromosome-1-negative
-# 
+all: test.tsv train.tsv
+
 # chromosome-1-positive: ${CHROMOSOME} select-strand.py window-filter.py make-features.py
 # 	./select-strand.py 0 < $< | ./window-filter.py | ./make-features.py --header > $@
 # 
 # chromosome-1-negative: ${CHROMOSOME} select-strand.py window-filter.py make-features.py
 # 	./select-strand.py 1 < $< | ./window-filter.py | ./make-features.py --header > $@
 
-compressed-chromosomes: genome.tar.xz select-strand.py window-filter.py make-features.py
-	bash -c 'tar -xOf $< |tee >(./select-strand.py 0 |./window-filter.py |./make-features.py) >(./select-strand.py 1 |./window-filter.py |./make-features.py) >/dev/null |cat <(./make-features.py --header-only) - > $@'
+compressed-chromosomes.tsv: genome.tar.xz select-strand.py window-filter.py make-features.py
+	tar -xOf $< |tee >(./select-strand.py 0 |./window-filter.py |./make-features.py) >(./select-strand.py 1 |./window-filter.py |./make-features.py) >/dev/null |cat > $@
 
 gene-short: NC_000001.11
 	head -c 90000000 $^ > $@
+
+
+shuffled-chromosomes.tsv: compressed-chromosomes.tsv get-seeded-random.sh
+	shuf --random-source=<(./get-seeded-random.sh 5345) $< > $@
+
+test.tsv: shuffled-chromosomes.tsv
+	# Take the first 1/8 of the shuffled file, add a header
+	head -n $$(echo `wc -l < $<` / 8 |bc) $< |cat <(./make-features.py --header-only) - > $@
+
+train.tsv: shuffled-chromosomes.tsv test.tsv
+	# Take whatever is not in test.tsv
+	head -n1 test.tsv > $@ # Copy the header
+	tail -n +$$(echo `wc -l test.tsv |sed -e 's/ .*//'` + 1 |bc) $< >> $@
 
 
 triplet-histogram.png: histogram-data.txt plot-triplet-histogram.gpl
@@ -46,7 +61,7 @@ genome.tar.xz:
 
 clean:
 	rm -f ending-triplets.txt after-end-triplets.txt starting-triplets.txt before-start-triplets.txt histogram-data.txt triplet-histogram.png
-	rm -f chromosome-1-positive chromosome-1-negative compressed-chromosomes gene-short
+	rm -f chromosome-1-positive chromosome-1-negative compressed-chromosomes.tsv shuffled-chromosomes.tsv gene-short test.tsv train.tsv
 
 
 
