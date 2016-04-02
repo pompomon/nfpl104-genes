@@ -1,11 +1,21 @@
-.PHONY: clean
+.PHONY: all clean
 CHROMOSOME = NC_000001.11
+# gene-short
+#NC_000001.11
 
-chromosome-1-positive: NC_000001.11 select-strand.py make-features.py
-	./select-strand.py 0 < $< 2>/dev/null | ./make-features.py > $@
+# all: chromosome-1-positive chromosome-1-negative
+# 
+# chromosome-1-positive: ${CHROMOSOME} select-strand.py window-filter.py make-features.py
+# 	./select-strand.py 0 < $< | ./window-filter.py | ./make-features.py --header > $@
+# 
+# chromosome-1-negative: ${CHROMOSOME} select-strand.py window-filter.py make-features.py
+# 	./select-strand.py 1 < $< | ./window-filter.py | ./make-features.py --header > $@
 
-chromosome-1-negative: NC_000001.11 select-strand.py make-features.py
-	./select-strand.py 1 < $< 2>/dev/null | ./make-features.py > $@
+compressed-chromosomes: genome.tar.xz select-strand.py window-filter.py make-features.py
+	bash -c 'tar -xOf $< |tee >(./select-strand.py 0 |./window-filter.py |./make-features.py) >(./select-strand.py 1 |./window-filter.py |./make-features.py) >/dev/null |cat <(./make-features.py --header-only) - > $@'
+
+gene-short: NC_000001.11
+	head -c 90000000 $^ > $@
 
 
 triplet-histogram.png: histogram-data.txt plot-triplet-histogram.gpl
@@ -27,16 +37,16 @@ histogram-data.txt: ending-triplets.txt after-end-triplets.txt starting-triplets
 	bash -c 'join -j2 -a1 -e0 -oauto <(sort -k2 before-start-triplets.txt) <(sort -k2 starting-triplets.txt) | join -11 -22 -a1 -e0 -oauto - <(sort -k2 ending-triplets.txt) | join -11 -22 -a1 -e0 -oauto - <(sort -k2 after-end-triplets.txt)' > $@
 
 
-# NC_000001.11: genome.tar.xz
-# 	tar -xvf $< $@
-#
-# genome.tar.xz:
-# 	wget -O $@ http://jonys.cz/skola/npfl104/genes/genome.tar.xz
+NC_000001.11: genome.tar.xz
+	tar -xvf $< $@
+
+genome.tar.xz:
+	wget -O $@ http://jonys.cz/skola/npfl104/genes/genome.tar.xz
 
 
 clean:
 	rm -f ending-triplets.txt after-end-triplets.txt starting-triplets.txt before-start-triplets.txt histogram-data.txt triplet-histogram.png
-	rm -f chromosome-1-positive chromosome-1-negative
+	rm -f chromosome-1-positive chromosome-1-negative compressed-chromosomes gene-short
 
 
 
