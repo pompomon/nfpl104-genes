@@ -5,6 +5,12 @@ CHROMOSOME = NC_000001.11
 # gene-short
 #NC_000001.11
 
+pompomon.tar.xz: test.tsv train.tsv
+	tar -cf pompomon.tar $^
+	xz -z9evv pompomon.tar
+
+
+
 all: test.tsv train.tsv
 
 # chromosome-1-positive: ${CHROMOSOME} select-strand.py window-filter.py make-features.py
@@ -21,7 +27,7 @@ gene-short: NC_000001.11
 
 
 shuffled-chromosomes.tsv: compressed-chromosomes.tsv get-seeded-random.sh
-	shuf --random-source=<(./get-seeded-random.sh 5345) $< > $@
+	shuf --random-source=<(./get-seeded-random.sh 5345) $< |head -n 700000 > $@
 
 test.tsv: shuffled-chromosomes.tsv
 	# Take the first 1/8 of the shuffled file, add a header
